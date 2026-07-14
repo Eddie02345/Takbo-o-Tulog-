@@ -4,6 +4,8 @@ import android.content.Context
 import android.location.Geocoder
 import com.github.eddie02345.takbootulog.domain.HourlyForecast
 import com.github.eddie02345.takbootulog.domain.WeatherRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -13,9 +15,9 @@ class WeatherRepositoryImpl(
     private val apiService: WeatherApiService
 ) : WeatherRepository {
 
-    override suspend fun getCurrentForecast(context: Context, lat: Double, lon: Double): Result<Pair<HourlyForecast, String>> {
-        return try {
-            // 1. Fetch the weather data from the API
+    override suspend fun getCurrentForecast(context: Context, lat: Double, lon: Double): Result<Pair<HourlyForecast, String>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            // 1. Fetch data from Open-Meteo Api on background thread
             val response = apiService.getHourlyForecast(lat = lat, lon = lon)
             val hourlyData = response.hourly
             val targetIndex = findCurrentHourIndex(hourlyData.time)
@@ -28,14 +30,16 @@ class WeatherRepositoryImpl(
                 relativeHumidity = hourlyData.humidities[targetIndex]
             )
 
-            // 2. Reverse geocode the coordinates to get the real City/Town name
+            // 2. Perform Geocoding safely off the Main thread
             val cityName = try {
                 val geocoder = Geocoder(context, Locale.getDefault())
                 val addresses = geocoder.getFromLocation(lat, lon, 1)
-                // Grab the locality (City/Town). Fallback to adminArea (Province) if null.
-                addresses?.firstOrNull()?.locality ?: addresses?.firstOrNull()?.adminArea ?: "Unknown Location"
+                addresses?.firstOrNull()?.locality
+                    ?: addresses?.firstOrNull()?.subAdminArea
+                    ?: addresses?.firstOrNull()?.adminArea
+                    ?: "Current Location"
             } catch (e: Exception) {
-                "Gps Location" // Fallback string if geocoder network fails
+                "Current Location" // Cleaner UI fallback string if system engine fails
             }
 
             Result.success(Pair(forecast, cityName.uppercase()))

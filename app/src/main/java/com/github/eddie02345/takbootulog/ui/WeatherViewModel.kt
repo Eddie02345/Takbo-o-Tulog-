@@ -18,15 +18,16 @@ class WeatherViewModel(
     private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
-    // We remove the fetchWeather call from init because it requires a Context now.
-    // Compose will fire it automatically when the screen mounts.
-
-    fun fetchWeather(context: Context) {
+    // Added lat and lon parameters that default to Baguio City coordinates
+    fun fetchWeather(
+        context: Context,
+        lat: Double = 16.4023,
+        lon: Double = 120.5960
+    ) {
         viewModelScope.launch {
             _uiState.value = WeatherUiState.Loading
 
-            // Try changing these coordinates to 15.4381, 119.9056 to test it out!
-            val result = repository.getCurrentForecast(context = context, lat = 16.4023, lon = 120.5960)
+            val result = repository.getCurrentForecast(context = context, lat = lat, lon = lon)
 
             result.onSuccess { pair ->
                 val forecast = pair.first
@@ -36,7 +37,7 @@ class WeatherViewModel(
                 _uiState.value = WeatherUiState.Success(forecast, verdict, cityName)
             }.onFailure { exception ->
                 _uiState.value = WeatherUiState.Error(
-                    message = exception.localizedMessage ?: "Hindi maka-connect sa server, boss."
+                    message = exception.localizedMessage ?: "Hindi makakonekta sa server, boss."
                 )
             }
         }

@@ -64,4 +64,5 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.compose.material:material-icons-extended:1.7.6")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

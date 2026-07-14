@@ -1,5 +1,7 @@
 package com.github.eddie02345.takbootulog.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -20,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.eddie02345.takbootulog.domain.HourlyForecast
 import com.github.eddie02345.takbootulog.domain.Verdict
+import kotlinx.coroutines.launch
 
 @Composable
 fun WeatherScreen(
@@ -28,20 +31,47 @@ fun WeatherScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    // Automatically trigger the fetch when the screen first mounts
-    LaunchedEffect(Unit) {
-        viewModel.fetchWeather(context)
+    // 1. Set up the permission request handler
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        coroutineScope.launch {
+            if (fineGranted || coarseGranted) {
+                // GPS Permission allowed -> fetch coordinates
+                val location = LocationHelper.getLastKnownLocation(context)
+                if (location != null) {
+                    viewModel.fetchWeather(context, location.latitude, location.longitude)
+                } else {
+                    viewModel.fetchWeather(context) // Fallback to Baguio if location returned null
+                }
+            } else {
+                // Permission Denied -> fallback to Baguio
+                viewModel.fetchWeather(context)
+            }
+        }
     }
 
-    // Dynamic background color handling
+    // 2. Trigger permission prompt automatically on app startup
+    LaunchedEffect(Unit) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
     val targetBackgroundColor = when (val state = uiState) {
         is WeatherUiState.Success -> Color(android.graphics.Color.parseColor(state.verdict.colorHex))
-        is WeatherUiState.Error -> Color(0xFFD32F2F) // Muted Red for system error
+        is WeatherUiState.Error -> Color(0xFFD32F2F)
         WeatherUiState.Loading -> MaterialTheme.colorScheme.background
     }
 
-    // Smooth color fading transition animation when states switch
     val animatedBgColor by animateColorAsState(
         targetValue = targetBackgroundColor,
         animationSpec = tween(durationMillis = 500),
@@ -82,7 +112,15 @@ fun WeatherScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { viewModel.fetchWeather(context) },
+                        onClick = {
+                            // Re-request flow on click
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                     ) {
                         Text("Subukan Ulit")
@@ -94,7 +132,16 @@ fun WeatherScreen(
                     cityName = state.cityName,
                     verdict = state.verdict,
                     forecast = state.forecast,
-                    onRefresh = { viewModel.fetchWeather(context) }
+                    onRefresh = {
+                        coroutineScope.launch {
+                            val location = LocationHelper.getLastKnownLocation(context)
+                            if (location != null) {
+                                viewModel.fetchWeather(context, location.latitude, location.longitude)
+                            } else {
+                                viewModel.fetchWeather(context)
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -113,7 +160,6 @@ private fun SuccessContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top Section: Dynamic City/Town Location Header
         Text(
             text = "📍 $cityName",
             fontWeight = FontWeight.Bold,
@@ -122,30 +168,31 @@ private fun SuccessContent(
             modifier = Modifier.padding(top = 16.dp)
         )
 
-        // Middle Section: The Main Target Verdict and Relatable Description
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(horizontal = 8.dp)
         ) {
+            // FIXED OVERLAP TEXT HERE
             Text(
                 text = verdict.title,
-                fontSize = 54.sp,
+                fontSize = 48.sp,              // Slightly downsized so it is less cramped
+                lineHeight = 54.sp,            // EXPLICIT LINE HEIGHT PREVENTS WRAP OVERLAP
                 fontWeight = FontWeight.Black,
                 color = Color.White,
-                letterSpacing = 2.sp
+                letterSpacing = 2.sp,
+                textAlign = TextAlign.Center   // Centered when wrapped
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = verdict.description,
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                lineHeight = 30.sp
+                lineHeight = 28.sp
             )
         }
 
-        // Bottom Section: The Weather Metrics Card Display & Action Button
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Card(
                 shape = RoundedCornerShape(24.dp),
@@ -174,7 +221,6 @@ private fun SuccessContent(
                 }
             }
 
-            // Refresh IconButton
             FilledIconButton(
                 onClick = onRefresh,
                 modifier = Modifier.size(56.dp),
