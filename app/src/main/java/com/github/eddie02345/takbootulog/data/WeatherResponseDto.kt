@@ -14,6 +14,9 @@ data class HourlyDataDto(
     @SerializedName("temperature_2m")
     val temperatures: List<Double>,
 
+    @SerializedName("apparent_temperature")
+    val apparentTemperatures: List<Double>,
+
     @SerializedName("relative_humidity_2m")
     val humidities: List<Int>,
 

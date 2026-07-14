@@ -24,6 +24,7 @@ class WeatherRepositoryImpl(
 
             val forecast = HourlyForecast(
                 temperature = hourlyData.temperatures[targetIndex],
+                feelsLikeTemperature = hourlyData.apparentTemperatures[targetIndex], // 🆕 Mapped here
                 rainProbability = hourlyData.rainProbabilities[targetIndex],
                 rainVolume = hourlyData.rainVolumes[targetIndex],
                 uvIndex = hourlyData.uvIndices[targetIndex],

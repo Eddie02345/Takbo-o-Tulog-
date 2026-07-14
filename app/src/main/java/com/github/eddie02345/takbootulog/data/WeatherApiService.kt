@@ -8,7 +8,7 @@ interface WeatherApiService {
     suspend fun getHourlyForecast(
         @Query("latitude") lat: Double,
         @Query("longitude") lon: Double,
-        @Query("hourly") hourlyMetrics: String = "temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,uv_index",
+        @Query("hourly") hourlyMetrics: String = "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,precipitation,uv_index",
         @Query("timezone") timezone: String = "Asia/Manila"
     ): WeatherResponseDto
     companion object {

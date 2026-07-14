@@ -33,7 +33,6 @@ fun WeatherScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // 1. Set up the permission request handler
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -42,21 +41,18 @@ fun WeatherScreen(
 
         coroutineScope.launch {
             if (fineGranted || coarseGranted) {
-                // GPS Permission allowed -> fetch coordinates
                 val location = LocationHelper.getLastKnownLocation(context)
                 if (location != null) {
                     viewModel.fetchWeather(context, location.latitude, location.longitude)
                 } else {
-                    viewModel.fetchWeather(context) // Fallback to Baguio if location returned null
+                    viewModel.fetchWeather(context)
                 }
             } else {
-                // Permission Denied -> fallback to Baguio
                 viewModel.fetchWeather(context)
             }
         }
     }
 
-    // 2. Trigger permission prompt automatically on app startup
     LaunchedEffect(Unit) {
         locationPermissionLauncher.launch(
             arrayOf(
@@ -90,30 +86,17 @@ fun WeatherScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Checking conditions...",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text(text = "Checking conditions...", style = MaterialTheme.typography.bodyMedium)
                 }
             }
             is WeatherUiState.Error -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Disaster Strike! 😭",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Text(text = "Disaster Strike! 😭", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = state.message,
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center
-                    )
+                    Text(text = state.message, color = Color.White.copy(alpha = 0.8f), textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = {
-                            // Re-request flow on click
                             locationPermissionLauncher.launch(
                                 arrayOf(
                                     android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -160,60 +143,77 @@ private fun SuccessContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        // Dynamic Header
         Text(
             text = "📍 $cityName",
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            color = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.padding(top = 16.dp)
+            fontSize = 15.sp,
+            color = Color.White.copy(alpha = 0.85f),
+            modifier = Modifier.padding(top = 12.dp)
         )
 
+        // Middle Section: Massive Clean Verdict Display
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
         ) {
-            // FIXED OVERLAP TEXT HERE
             Text(
                 text = verdict.title,
-                fontSize = 48.sp,              // Slightly downsized so it is less cramped
-                lineHeight = 54.sp,            // EXPLICIT LINE HEIGHT PREVENTS WRAP OVERLAP
+                fontSize = 56.sp,
+                lineHeight = 62.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White,
-                letterSpacing = 2.sp,
-                textAlign = TextAlign.Center   // Centered when wrapped
+                letterSpacing = 1.sp,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = verdict.description,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White,
+                color = Color.White.copy(alpha = 0.95f),
                 textAlign = TextAlign.Center,
                 lineHeight = 28.sp
             )
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Bottom Section: Cleaned up Weather Metrics Card & Refresh Action
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.92f)),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.94f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 20.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
                         text = "Current Weather Stats",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color.Gray
+                        fontSize = 13.sp,
+                        color = Color.Black.copy(alpha = 0.4f),
+                        letterSpacing = 0.5.sp
                     )
-                    HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
+                    HorizontalDivider(thickness = 1.dp, color = Color.Black.copy(alpha = 0.08f))
 
                     MetricRow(label = "🌡️ Temperature", value = "${forecast.temperature}°C")
+
+                    // 🆕 NEW FEELS LIKE TEMPERATURE ROW
+                    MetricRow(
+                        label = "🥵 Feels Like",
+                        value = "${forecast.feelsLikeTemperature}°C",
+                        valueColor = if (forecast.feelsLikeTemperature > forecast.temperature) Color(0xFFE65100) else Color.Black
+                    )
+
                     MetricRow(label = "💧 Humidity", value = "${forecast.relativeHumidity}%")
                     MetricRow(label = "☀️ UV Index", value = "${forecast.uvIndex}")
                     MetricRow(label = "🌧️ Rain Probability", value = "${forecast.rainProbability}%")
@@ -223,28 +223,46 @@ private fun SuccessContent(
 
             FilledIconButton(
                 onClick = onRefresh,
-                modifier = Modifier.size(56.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White)
+                modifier = Modifier.size(60.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(20.dp) // Clean squircle shape
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Refresh data",
-                    tint = Color.Black,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun MetricRow(label: String, value: String) {
+private fun MetricRow(
+    label: String,
+    value: String,
+    valueColor: Color = Color.Black
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, fontWeight = FontWeight.Normal, color = Color.Black)
-        Text(text = value, fontWeight = FontWeight.Bold, color = Color.Black)
+        Text(
+            text = label,
+            fontWeight = FontWeight.Medium,
+            color = Color.Black.copy(alpha = 0.7f),
+            fontSize = 15.sp
+        )
+        Text(
+            text = value,
+            fontWeight = FontWeight.Bold,
+            color = valueColor,
+            fontSize = 16.sp
+        )
     }
 }
