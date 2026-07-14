@@ -62,4 +62,6 @@ dependencies {
     // OkHttp & Logging Interceptor to inspect API traffic in App Inspection/Logcat
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.compose.material:material-icons-extended:1.7.6")
 }
