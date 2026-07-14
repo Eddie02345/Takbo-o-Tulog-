@@ -1,0 +1,27 @@
+# Gradle files
+.gradle/
+build/
+
+# Android Studio local files
+local.properties
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/nav/
+.idea/assetWizardSettings.xml
+.idea/kotlinc.xml
+.idea/deploymentTargetSelector.xml
+
+# Built/compiled outputs
+*.apk
+*.aar
+*.ap_
+*.der
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
