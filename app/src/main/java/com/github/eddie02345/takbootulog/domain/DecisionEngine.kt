@@ -7,10 +7,14 @@ object DecisionEngine {
         val activeWarningFlags = mutableListOf<String>()
 
         // 1. AGGREGATE ALL RED FLAGS (TULOG MUNA CRITERIA)
-        if (forecast.rainProbability > 60 || forecast.rainVolume > 1.5) {
+        // Rain: PAGASA calls 15-30mm/hr "heavy", 30+ "intense/torrential".
+        // >20mm/hr is a reasonable don't go out line.
+        if (forecast.rainProbability > 70 || forecast.rainVolume > 20.0) {
             activeRedFlags.add("umuulan nang malakas")
         }
-        if (forecast.feelsLikeTemperature > 32.0) {
+        // Heat: PAGASA heat index tiers - Caution 27-32, Extreme Caution 33-41,
+        // Danger 42-51.
+        if (forecast.feelsLikeTemperature > 39.0) {
             activeRedFlags.add("mainit pa sa galit ng mama mo")
         }
         if (forecast.uvIndex > 8.0) {
@@ -21,13 +25,20 @@ object DecisionEngine {
         if (forecast.relativeHumidity > 85 && forecast.feelsLikeTemperature > 26.0) {
             activeWarningFlags.add("parang tatakbo ka sa loob ng sinigang sa lagkit")
         }
-        if (forecast.rainProbability in 21..60 || (forecast.rainVolume > 0.0 && forecast.rainVolume <= 1.5)) {
+        // Light-to-moderate rain (PAGASA: <2.5mm/hr light, 2.5-7.5 moderate) is a
+        // warning, not a stop-sign.
+        if (forecast.rainProbability in 21..70 || (forecast.rainVolume > 0.0 && forecast.rainVolume <= 20.0)) {
             activeWarningFlags.add("may kaunting ambon na baka lumakas")
         }
-        if (forecast.feelsLikeTemperature in 25.0..32.0) {
+        // Warning band now covers PAGASA's Caution (27-32) through Extreme Caution
+        // (33-39) heat index range, since this is where most PH daytime running
+        // actually happens.
+        if (forecast.feelsLikeTemperature in 27.0..39.0) {
             activeWarningFlags.add("maalinsangan ang hangin")
-        } else if (forecast.feelsLikeTemperature < 12.0) {
-            activeWarningFlags.add("manginginig ka sa lamig")
+        } else if (forecast.feelsLikeTemperature < 18.0) {
+            // <12.0 almost never fires outside Baguio/Sagada/Tagaytay; loosened so
+            // it can actually trigger for lowland mornings too.
+            activeWarningFlags.add("medyo malamig, pero kaya pa")
         }
         if (forecast.uvIndex in 5.0..8.0) {
             activeWarningFlags.add("masakit sa balat ang sikat ng araw")
@@ -64,6 +75,7 @@ object DecisionEngine {
                         "parang tatakbo ka sa loob ng sinigang sa lagkit" -> "Hindi naman umuulan pero parang tatakbo ka sa loob ng sinigang. Sobrang lagkit!"
                         "may kaunting ambon na baka lumakas" -> "May kaunting ambon. Pwede pa naman, pero baka maging aquatic animal ka pag biglang bumuhos."
                         "masakit sa balat ang sikat ng araw" -> "Medyo masakit na sa balat ang sikat ng araw. Mag-sunblock ka muna bago lumabas!"
+                        "medyo malamig, pero kaya pa" -> "Medyo malamig ngayon, pero kaya pa naman. Magdala ka lang ng jacket."
                         else -> "Medyo delikado ang kondisyon ngayon. Pwede namang tumakbo, pero hinay-hinay lang."
                     }
                 }
