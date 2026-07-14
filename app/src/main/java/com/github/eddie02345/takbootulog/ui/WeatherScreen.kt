@@ -211,7 +211,7 @@ private fun SuccessContent(
                     MetricRow(
                         label = "🥵 Feels Like",
                         value = "${forecast.feelsLikeTemperature}°C",
-                        valueColor = if (forecast.feelsLikeTemperature > forecast.temperature) Color(0xFFE65100) else Color.Black
+                        valueColor = Color.Black
                     )
 
                     MetricRow(label = "💧 Humidity", value = "${forecast.relativeHumidity}%")

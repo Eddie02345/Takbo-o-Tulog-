@@ -4,7 +4,6 @@ object DecisionEngine {
 
     fun evaluate(forecast: HourlyForecast): Verdict {
         // 1. CHECK RED FLAGS (TULOG MUNA) FIRST
-        // Isang red flag lang, bagsak na agad ang verdict sa Tulog Muna.
 
         if (forecast.rainProbability > 60 || forecast.rainVolume > 1.5) {
             return Verdict(
@@ -15,7 +14,7 @@ object DecisionEngine {
             )
         }
 
-        if (forecast.temperature > 32.0) {
+        if (forecast.feelsLikeTemperature > 32.0) {
             return Verdict(
                 type = VerdictType.TULOG_MUNA,
                 title = "TULOG MUNA",
@@ -34,13 +33,11 @@ object DecisionEngine {
         }
 
         // 2. CHECK WARNING FLAGS (ALANGANIN) NEXT
-        // Kung walang hard blockages, tingnan natin kung medyo alanganin ang takbo.
-
-        if (forecast.relativeHumidity > 85 && forecast.temperature > 26.0) {
+        if (forecast.relativeHumidity > 85 && forecast.feelsLikeTemperature > 26.0) {
             return Verdict(
                 type = VerdictType.ALANGANIN,
                 title = "ALANGANIN",
-                colorHex = "#FBC02D", // Yellow / Dark Gold
+                colorHex = "#FBC02D", // Yellow
                 description = "Hindi naman umuulan pero parang tatakbo ka sa loob ng sinigang. Sobrang lagkit!"
             )
         }
@@ -54,7 +51,8 @@ object DecisionEngine {
             )
         }
 
-        if (forecast.temperature in 25.0..32.0 || forecast.temperature < 12.0) {
+
+        if (forecast.feelsLikeTemperature in 25.0..32.0 || forecast.feelsLikeTemperature < 12.0) {
             return Verdict(
                 type = VerdictType.ALANGANIN,
                 title = "ALANGANIN",
@@ -73,7 +71,6 @@ object DecisionEngine {
         }
 
         // 3. PERFECT CONDITIONS (TAKBO)
-        // Kung ligtas ang lahat ng parameters, takbo na!
         return Verdict(
             type = VerdictType.TAKBO,
             title = "TAKBO!",
