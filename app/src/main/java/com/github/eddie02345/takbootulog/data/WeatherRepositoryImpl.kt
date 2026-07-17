@@ -24,11 +24,13 @@ class WeatherRepositoryImpl(
 
             val forecast = HourlyForecast(
                 temperature = hourlyData.temperatures[targetIndex],
-                feelsLikeTemperature = hourlyData.apparentTemperatures[targetIndex], // 🆕 Mapped here
+                feelsLikeTemperature = hourlyData.apparentTemperatures[targetIndex],
                 rainProbability = hourlyData.rainProbabilities[targetIndex],
                 rainVolume = hourlyData.rainVolumes[targetIndex],
                 uvIndex = hourlyData.uvIndices[targetIndex],
-                relativeHumidity = hourlyData.humidities[targetIndex]
+                relativeHumidity = hourlyData.humidities[targetIndex],
+                weatherCode = hourlyData.weatherCodes[targetIndex],
+                windSpeed = hourlyData.windSpeeds[targetIndex]
             )
 
             // 2. Perform Geocoding safely off the Main thread

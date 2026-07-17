@@ -6,5 +6,7 @@ data class HourlyForecast(
     val rainProbability: Int,     // in % (0 to 100)
     val rainVolume: Double,       // in mm
     val uvIndex: Double,          // UV level
-    val relativeHumidity: Int     // in % (0 to 100)
+    val relativeHumidity: Int,     // in % (0 to 100)
+    val weatherCode: Int,
+    val windSpeed: Double
 )

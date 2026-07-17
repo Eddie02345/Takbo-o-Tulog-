@@ -20,6 +20,12 @@ object DecisionEngine {
         if (forecast.uvIndex > 8.0) {
             activeRedFlags.add("mapapaso ang balat mo sa tindi ng UV index")
         }
+        if (forecast.weatherCode in 95..99) {
+            activeRedFlags.add("may kulog't kidlat, delikado lumabas")
+        }
+        if (forecast.windSpeed > 40.0) {
+            activeRedFlags.add("sobrang lakas ng hangin")
+        }
 
         // 2. AGGREGATE ALL WARNING FLAGS (ALANGANIN CRITERIA)
         if (forecast.relativeHumidity > 85 && forecast.feelsLikeTemperature > 26.0) {
@@ -42,6 +48,9 @@ object DecisionEngine {
         }
         if (forecast.uvIndex in 5.0..8.0) {
             activeWarningFlags.add("masakit sa balat ang sikat ng araw")
+        }
+        if (forecast.windSpeed in 20.0..40.0) {
+            activeWarningFlags.add("medyo mahangin, pero kaya pa")
         }
 
         // 3. EVALUATE FINAL VERDICT STATUS AND STITCH TEXT DYNAMICALLY
