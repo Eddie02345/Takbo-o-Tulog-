@@ -27,5 +27,11 @@ data class HourlyDataDto(
     val rainVolumes: List<Double>,
 
     @SerializedName("uv_index")
-    val uvIndices: List<Double>
+    val uvIndices: List<Double>,
+
+    @SerializedName("weather_code")
+    val weatherCodes: List<Int>,
+
+    @SerializedName("wind_speed_10m")
+    val windSpeeds: List<Double>
 )
